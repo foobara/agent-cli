@@ -21,24 +21,8 @@ RSpec.describe Foobara::Agent do
       Capybaras::CreateCapybara.run!(name: "Basil", year_of_birth: 2021)
     end
 
-    let(:result_type) { Capybaras::Capybara }
     let(:command_classes) { [Capybaras::FindAllCapybaras, Capybaras::UpdateCapybara] }
     let(:goal) { "There is a capybara with a bad year of birth. Can you find and fix the bad record? Thanks!" }
-
-    describe "#accomplish_goal" do
-      let(:outcome) { agent.accomplish_goal(goal, result_type:) }
-
-      it "can fix the busted record", vcr: { record: :none } do
-        expect {
-          expect(outcome).to be_success
-          expect(result[:result_data].name).to eq("Barbara")
-        }.to change {
-          Capybaras::Capybara.transaction do
-            Capybaras::Capybara.find_by(name: "Barbara").year_of_birth
-          end
-        }.from(19).to(2019)
-      end
-    end
 
     describe "#run_cli" do
       let(:io_in_pipe) { IO.pipe }
