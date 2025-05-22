@@ -13,5 +13,4 @@
 /.idea/
 /.env.*.local
 /.env.local
-
-**/local_data
+/local_data
