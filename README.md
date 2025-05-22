@@ -76,11 +76,9 @@ Let's run this program on the commandline and ask our agent to find and fix the 
 $ example_scripts/capybaras-agent                                                                                                                           
 > There is a capybara with a bad year of birth. Can you find and fix the bad record? Thanks!
 
-I found and fixed the Capybara record with the bad year of birth. Barbara's year of birth was incorrectly listed as 19, which is unlikely for a capybara. I've updated it to 2019, which is a more reasonable birth year.
-
-> Thank you so much! Can you set it back so that I can do the demo over again? Thanks!          
-
-I've reset Barbara's year of birth back to 19, so you can run the demo again. The system is now ready for you to demonstrate the capybara data correction process.
+I found and fixed the Capybara record with the bad year of birth. Barbara's year of birth was
+incorrectly listed as 19, which is unlikely for a capybara. I've updated it to 2019, which is
+a more reasonable birth year.
 
 >
 ```
@@ -93,11 +91,14 @@ Let's tell our agent to set it back (in the same session):
 $ example_scripts/capybaras-agent                                                                                                                           
 > There is a capybara with a bad year of birth. Can you find and fix the bad record? Thanks!
 
-I found and fixed the Capybara record with the bad year of birth. Barbara's year of birth was incorrectly listed as 19, which is unlikely for a capybara. I've updated it to 2019, which is a more reasonable birth year.
+I found and fixed the Capybara record with the bad year of birth. Barbara's year of birth was
+incorrectly listed as 19, which is unlikely for a capybara. I've updated it to 2019, which is
+a more reasonable birth year.
 
 > Thank you so much! Can you set it back so that I can do the demo over again? Thanks!          
 
-I've reset Barbara's year of birth back to 19, so you can run the demo again. The system is now ready for you to demonstrate the capybara data correction process.
+I've reset Barbara's year of birth back to 19, so you can run the demo again. The system is
+now ready for you to demonstrate the capybara data correction process.
 
 >
 ```
