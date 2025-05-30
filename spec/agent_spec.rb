@@ -5,7 +5,15 @@ RSpec.describe Foobara::Agent do
     Foobara::Persistence.default_crud_driver = Foobara::Persistence::CrudDrivers::InMemory.new
   end
 
-  let(:agent) { described_class.new(agent_name:, command_classes:, llm_model:) }
+  let(:agent) do
+    params = { command_classes:, llm_model: }
+
+    if agent_name
+      params[:agent_name] = agent_name
+    end
+
+    described_class.new(**params)
+  end
   let(:result) { outcome.result }
   let(:errors) { outcome.errors }
   let(:errors_hash) { outcome.errors_hash }
@@ -82,6 +90,8 @@ RSpec.describe Foobara::Agent do
               break
             end
 
+            break if io_out_reader.closed?
+
             next unless ready
 
             response = Foobara::Util.pipe_readline(io_out_reader)
@@ -116,7 +126,7 @@ RSpec.describe Foobara::Agent do
       end
 
       it "can handle new goals with old context", vcr: { record: :none } do
-        # consume the opening prompt
+        # consume the welcome message
         response = next_message_to_user
         expect(response).to be_a(String)
 
@@ -126,6 +136,10 @@ RSpec.describe Foobara::Agent do
 
         io_in_writer.puts goal
 
+        # eat up progress message
+        response = next_message_to_user
+        expect(response).to be_a(String)
+        # the message to the user
         response = next_message_to_user
         expect(response).to be_a(String)
 
@@ -135,11 +149,66 @@ RSpec.describe Foobara::Agent do
 
         io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
 
+        # eat up progress message
+        response = next_message_to_user
+        expect(response).to be_a(String)
+        # the message to the user
         response = next_message_to_user
         expect(response).to be_a(String)
 
         Capybaras::Capybara.transaction do
           expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
+        end
+      end
+
+      context "with no name" do
+        let(:agent_name) { nil }
+
+        it "can handle new goals with old context", vcr: { record: :none } do
+          # consume the welcome message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+
+          Capybaras::Capybara.transaction do
+            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
+          end
+
+          io_in_writer.puts goal
+
+          # eat up progress message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+          # the message to the user
+          response = next_message_to_user
+          expect(response).to be_a(String)
+
+          Capybaras::Capybara.transaction do
+            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(2019)
+          end
+
+          io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
+
+          # eat up progress message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+          # the message to the user
+          response = next_message_to_user
+          expect(response).to be_a(String)
+
+          Capybaras::Capybara.transaction do
+            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
+          end
+
+          io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
+
+          # eat up progress message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+          # the message to the user
+          response = next_message_to_user
+          expect(response).to be_a(String)
+
+          io_in_writer.puts "/quit"
         end
       end
 
@@ -157,6 +226,10 @@ RSpec.describe Foobara::Agent do
 
           io_in_writer.puts goal
 
+          # eat up progress message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+          # the message to the user
           response = next_message_to_user
           expect(response).to be_a(String)
 
@@ -166,6 +239,10 @@ RSpec.describe Foobara::Agent do
 
           io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
 
+          # eat up progress message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+          # the message to the user
           response = next_message_to_user
           expect(response).to be_a(String)
 
@@ -194,6 +271,10 @@ RSpec.describe Foobara::Agent do
 
           Foobara::Util.pipe_writeline(io_in_writer, goal)
 
+          # eat up progress message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+          # the message to the user
           response = next_message_to_user
           expect(response).to be_a(String)
 
@@ -209,6 +290,10 @@ RSpec.describe Foobara::Agent do
           #   "Can you change Barbara's year_of_birth back to 19 so I can do the demo over again?"
           # )
           #
+          # # eat up progress message
+          # response = next_message_to_user
+          # expect(response).to be_a(String)
+          # # the message to the user
           # response = next_message_to_user
           # expect(response).to be_a(String)
           #

@@ -1,14 +1,14 @@
 PATH
   remote: ../../agent
   specs:
-    foobara-agent (0.0.3)
+    foobara-agent (0.0.5)
       foobara (~> 0.0.126)
       foobara-llm-backed-command (~> 0.0.1)
 
 PATH
   remote: ..
   specs:
-    foobara-agent-cli (0.0.2)
+    foobara-agent-cli (0.0.3)
       foobara-agent (~> 0.0.1)
 
 GEM

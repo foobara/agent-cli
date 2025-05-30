@@ -1,5 +1,5 @@
 module Foobara
-  class Agent
+  class Agent < CommandConnector
     class CliRunner
       attr_accessor :io_in, :io_out, :io_err, :agent
 
@@ -11,10 +11,8 @@ module Foobara
       end
 
       def run
-        Util.pipe_write_with_flush(
-          io_out,
-          "\nWelcome to the Foobara Agent CLI! Type your goal and press enter to get started.\n\n> "
-        )
+        print_welcome_message
+        print_prompt
 
         loop do
           ready = Util.pipe_wait_readable(io_in, 1)
@@ -30,28 +28,66 @@ module Foobara
 
           goal = line.strip
 
-          break if goal =~ /\A(exit|quit|bye)\z/i
+          if goal =~ /\A\/?(exit|quit|bye)\z/i
+            print_agent_message("Goodbye for now!")
+            agent.kill!
+            break
+          end
+
           next if goal.empty?
 
           begin
+            print_agent_message("On it...")
             outcome = agent.accomplish_goal(goal)
-
-            if outcome.success?
-              result = outcome.result
-              Util.pipe_writeline(io_out, "\nAgent says: #{result[:message_to_user]}\n")
-            else
-              # :nocov:
-              Util.pipe_writeline(io_err, "\nError: #{outcome.errors_hash}\n")
-              # :nocov:
-            end
-
-            Util.pipe_write_with_flush(io_out, "\n> ")
+            print_outcome(outcome)
+            print_prompt
           rescue => e
             # :nocov:
             Util.pipe_writeline(io_err, e.message)
             Util.pipe_writeline(io_err, e.backtrace)
             # :nocov:
           end
+        end
+      end
+
+      def print_welcome_message
+        welcome_message = if agent_name
+                            "Welcome! I am #{agent_name}!"
+                          else
+                            "Welcome to the Foobara Agent CLI!"
+                          end
+
+        welcome_message << " What would you like me to attempt to accomplish?"
+
+        Util.pipe_writeline(io_out, "\n#{welcome_message}\n")
+      end
+
+      def print_prompt
+        Util.pipe_write_with_flush(io_out, "\n> ")
+      end
+
+      def print_outcome(outcome)
+        message, stream = if outcome.success?
+                            [outcome.result[:message_to_user], io_out]
+                          else
+                            # :nocov:
+                            ["ERROR: #{outcome.errors_hash}", io_err]
+                            # :nocov:
+                          end
+
+        print_agent_message(message, stream)
+      end
+
+      def print_agent_message(message, stream = io_out)
+        name = agent_name || "Agent"
+        Util.pipe_writeline(stream, "\n#{name} says: #{message}\n")
+      end
+
+      def agent_name
+        name = agent.agent_name
+
+        if name && !name.empty?
+          name
         end
       end
     end
