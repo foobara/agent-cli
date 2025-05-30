@@ -27,16 +27,69 @@ RSpec.describe Foobara::Agent do
     describe "#run_cli" do
       let(:io_in_pipe) { IO.pipe }
       let(:io_out_pipe) { IO.pipe }
+      let(:io_err_pipe) { IO.pipe }
       let(:io_in_reader) { io_in_pipe.first }
       let(:io_in_writer) { io_in_pipe.last }
       let(:io_out_reader) { io_out_pipe.first }
       let(:io_out_writer) { io_out_pipe.last }
+      let(:io_err_reader) { io_err_pipe.first }
+      let(:io_err_writer) { io_err_pipe.last }
 
       let(:io_in) { io_in_reader }
       let(:io_out) { io_out_writer }
+      let(:io_err) { io_err_writer }
+
+      let(:agent_thread) do
+        Thread.new do
+          agent.run_cli(io_in:, io_out:, io_err: $stderr)
+        rescue
+          sleep 1
+          Foobara::Util.close(io_in_writer)
+          Foobara::Util.close(io_out_writer)
+          Foobara::Util.close(io_err_writer)
+        end
+      end
+      let(:monitor_agent_thread) do
+        Thread.new do
+          loop do
+            sleep 1
+
+            if io_in_reader.closed?
+              break
+            end
+
+            if [:killed, :error, :failure].include?(agent.state_machine.current_state)
+              # Give time for error to be printed to stdout
+              sleep 1
+              Foobara::Util.close(io_in_writer)
+              Foobara::Util.close(io_in_reader)
+              Foobara::Util.close(io_out_reader)
+              Foobara::Util.close(io_out_writer)
+              break
+            end
+          end
+        end
+      end
 
       def next_message_to_user
-        response = io_out_reader.readline.chomp
+        response = nil
+
+        begin
+          loop do
+            ready = Foobara::Util.pipe_wait_readable(io_out_reader, 1)
+
+            if [:killed, :error, :failure].include?(agent.state_machine.current_state)
+              break
+            end
+
+            next unless ready
+
+            response = Foobara::Util.pipe_readline(io_out_reader)
+            break
+          end
+        rescue EOFError
+          nil
+        end
 
         if response =~ /\A[\s>]*\z/
           next_message_to_user
@@ -45,16 +98,58 @@ RSpec.describe Foobara::Agent do
         end
       end
 
-      it "can handle new goals with old context", vcr: { record: :none } do
-        agent_thread = nil
+      before do
+        monitor_agent_thread
+        agent_thread
+      end
 
-        begin
-          agent_thread = Thread.new do
-            agent.run_cli(io_in:, io_out:)
-          ensure
-            io_in_writer.close
-            io_out_writer.close
-          end
+      after do
+        Foobara::Util.close(io_in_writer)
+        Foobara::Util.close(io_out_writer)
+        Foobara::Util.close(io_err_writer)
+        Foobara::Util.close(io_in_reader)
+        Foobara::Util.close(io_out_reader)
+        Foobara::Util.close(io_err_reader)
+
+        agent_thread.join
+        monitor_agent_thread.join
+      end
+
+      it "can handle new goals with old context", vcr: { record: :none } do
+        # consume the opening prompt
+        response = next_message_to_user
+        expect(response).to be_a(String)
+
+        Capybaras::Capybara.transaction do
+          expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
+        end
+
+        io_in_writer.puts goal
+
+        response = next_message_to_user
+        expect(response).to be_a(String)
+
+        Capybaras::Capybara.transaction do
+          expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(2019)
+        end
+
+        io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
+
+        response = next_message_to_user
+        expect(response).to be_a(String)
+
+        Capybaras::Capybara.transaction do
+          expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
+        end
+      end
+
+      context "when using openai" do
+        let(:llm_model) { "chatgpt-4o-latest" }
+
+        it "can handle new goals with old context using openai models", vcr: { record: :once } do
+          # consume the opening prompt
+          response = next_message_to_user
+          expect(response).to be_a(String)
 
           Capybaras::Capybara.transaction do
             expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
@@ -77,101 +172,49 @@ RSpec.describe Foobara::Agent do
           Capybaras::Capybara.transaction do
             expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
           end
-        ensure
-          io_in_writer.close
-          io_out_writer.close
-
-          agent_thread&.join
-        end
-      end
-
-      context "when using openai" do
-        let(:llm_model) { "chatgpt-4o-latest" }
-
-        it "can handle new goals with old context using openai models", vcr: { record: :none } do
-          agent_thread = nil
-
-          begin
-            agent_thread = Thread.new do
-              agent.run_cli(io_in:, io_out:)
-            ensure
-              io_in_writer.close
-              io_out_writer.close
-            end
-
-            Capybaras::Capybara.transaction do
-              expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
-            end
-
-            io_in_writer.puts goal
-
-            response = next_message_to_user
-            expect(response).to be_a(String)
-
-            Capybaras::Capybara.transaction do
-              expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(2019)
-            end
-
-            io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
-
-            response = next_message_to_user
-            expect(response).to be_a(String)
-
-            Capybaras::Capybara.transaction do
-              expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
-            end
-          ensure
-            io_in_writer.close
-            io_out_writer.close
-
-            agent_thread&.join
-          end
         end
       end
 
       context "when using ollama" do
         let(:llm_model) { "deepseek-r1:32b" }
 
-        it "can handle new goals with old context using ollama models", :skip, vcr: { record: :none } do
-          agent_thread = nil
+        let(:goal) do
+          "There is a capybara with a bad year of birth. " \
+            "It was accidentally entered as a 2-digit year instead of a 4-digit year. " \
+            "I want you to find and fix the bad record by adding the missing first two digits which are 2 and 0."
+        end
 
-          begin
-            agent_thread = Thread.new do
-              agent.run_cli(io_in:, io_out:)
-            ensure
-              io_in_writer.close
-              io_out_writer.close
-            end
+        it "can handle new goals with old context using ollama models", vcr: { record: :none } do
+          response = next_message_to_user
+          expect(response).to include "Welcome"
 
-            Capybaras::Capybara.transaction do
-              expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
-            end
-
-            io_in_writer.puts goal
-
-            response = next_message_to_user
-            puts response
-            expect(response).to be_a(String)
-
-            Capybaras::Capybara.transaction do
-              expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(2019)
-            end
-
-            io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
-
-            response = next_message_to_user
-            puts response
-            expect(response).to be_a(String)
-
-            Capybaras::Capybara.transaction do
-              expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
-            end
-          ensure
-            io_in_writer.close
-            io_out_writer.close
-
-            agent_thread&.join
+          Capybaras::Capybara.transaction do
+            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
           end
+
+          Foobara::Util.pipe_writeline(io_in_writer, goal)
+
+          response = next_message_to_user
+          expect(response).to be_a(String)
+
+          Capybaras::Capybara.transaction do
+            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(2019)
+          end
+
+          # deepseek-r1 does not seem to do a consistently good job of setting it back to 19 so commenting this
+          # out for now.
+          #
+          # Foobara::Util.pipe_writeline(
+          #   io_in_writer,
+          #   "Can you change Barbara's year_of_birth back to 19 so I can do the demo over again?"
+          # )
+          #
+          # response = next_message_to_user
+          # expect(response).to be_a(String)
+          #
+          # Capybaras::Capybara.transaction do
+          #   expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
+          # end
         end
       end
     end

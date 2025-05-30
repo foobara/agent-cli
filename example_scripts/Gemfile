@@ -1,6 +1,10 @@
 source "https://rubygems.org"
 
-gem "foobara" # , path: "../../foobara"
+gem "foobara-agent", path: "../../agent"
+
+# gem "foobara", path: "../../foobara"
+# gem "foobara-util", path: "../../util"
+
 gem "foobara-agent-cli", path: "../"
 gem "foobara-anthropic-api"
 gem "foobara-dotenv-loader"

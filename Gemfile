@@ -5,7 +5,10 @@ ruby Foobara::AgentCli::MINIMUM_RUBY_VERSION
 
 gemspec
 
+# gem "foobara", path: "../foobara"
 # gem "foobara-agent", path: "../agent"
+# gem "foobara-util", path: "../util"
+# gem "foobara-llm-backed-command", path: "../llm-backed-command"
 
 gem "foobara-dotenv-loader", "~> 0.0.1"
 

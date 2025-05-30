@@ -3,6 +3,15 @@
 Allows you to run a Foobara::Agent in a loop giving it new goals to accomplish in a REPL-style
 CLI experience.  Currently works with Ollama, OpenAI, or Anthropic.
 
+## WARNING!!
+
+This is experimental at the moment! It will not ask you permission before running commands. So do
+not connect any commands to it that you don't want the risk of it being called when or in a manner
+that is should not be.
+
+If you would like to add that safety feature that would be awesome/fun! A good idea to let me know in advance
+so I can help or coordinate.
+
 ## Contributing
 
 I would love help with this and other Foobara gems! Feel free to hit me up at miles@foobara.com if you
@@ -74,6 +83,9 @@ Let's run this program on the commandline and ask our agent to find and fix the 
 
 ```
 $ example_scripts/capybaras-agent                                                                                                                           
+
+Welcome to the Foobara Agent CLI! Type your goal and press enter to get started.
+
 > There is a capybara with a bad year of birth. Can you find and fix the bad record? Thanks!
 
 I found and fixed the Capybara record with the bad year of birth. Barbara's year of birth was
@@ -85,10 +97,34 @@ a more reasonable birth year.
 
 We can check with FindAllCapybaras that it actually fixed the record!
 
+```
+$ ./capybaras-cli FindAllCapybaras
+{
+  name: "Fumiko",
+  year_of_birth: 2020,
+  id: 19
+},
+{
+  name: "Barbara",
+  year_of_birth: 2019,
+  id: 20
+},
+{
+  name: "Basil",
+  year_of_birth: 2021,
+  id: 21
+}
+```
+
+We can see that she was now born 2000 years later than before!
+
 Let's tell our agent to set it back (in the same session):
 
 ```
-$ example_scripts/capybaras-agent                                                                                                                           
+$ example_scripts/capybaras-agent
+
+Welcome to the Foobara Agent CLI! Type your goal and press enter to get started.
+
 > There is a capybara with a bad year of birth. Can you find and fix the bad record? Thanks!
 
 I found and fixed the Capybara record with the bad year of birth. Barbara's year of birth was
@@ -102,6 +138,8 @@ now ready for you to demonstrate the capybara data correction process.
 
 >
 ```
+
+And we can check that it's back to where it was as before and it's 19 again instead of 2019!
 
 Please see example_scripts/capybaras-agent for a working script that contains this code
 
