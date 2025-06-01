@@ -17,8 +17,9 @@ require "foobara/agent_cli"
 llm_model = "claude-3-7-sonnet-20250219"
 # llm_model = "chatgpt-4o-latest"
 
-Foobara::Agent.new(
-  agent_name: "CapyAgent",
-  command_classes: [FindAllCapybaras, UpdateCapybara],
-  llm_model:
-).run_cli
+agent = Foobara::Agent.new(agent_name: "CapyAgent", llm_model:)
+
+agent.connect(Capybaras::FindAllCapybaras)
+agent.connect(Capybaras::UpdateCapybara)
+
+agent.run_cli

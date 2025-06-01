@@ -3,86 +3,112 @@ require "foobara/local_files_crud_driver"
 crud_driver = Foobara::LocalFilesCrudDriver.new(multi_process: true)
 Foobara::Persistence.default_crud_driver = crud_driver
 
-class Capybara < Foobara::Entity
-  description "A gigantic semi-aquatic rodent!"
+module Capybaras
+  foobara_domain!
 
-  attributes do
-    id :integer
-    name :string, :required, "Name of the Capybara"
-    year_of_birth :integer, :required, "The year the Capybara was born"
+  class Capybara < Foobara::Entity
+    description "A gigantic semi-aquatic rodent!"
+
+    attributes do
+      id :integer
+      name :string, :required, "Name of the Capybara"
+      year_of_birth :integer, :required, "The year the Capybara was born"
+    end
+
+    primary_key :id
   end
 
-  primary_key :id
-end
+  class CreateCapybara < Foobara::Command
+    description "Creates a Capybara record"
 
-class CreateCapybara < Foobara::Command
-  description "Creates a Capybara record"
+    inputs Capybara.attributes_for_create
+    result Capybara, description: "The freshly created Capybara record"
 
-  inputs Capybara.attributes_for_create
-  result Capybara, description: "The freshly created Capybara record"
+    def execute
+      create_capybara
 
-  def execute
-    create_capybara
+      capybara
+    end
 
-    capybara
+    attr_accessor :capybara
+
+    def create_capybara
+      self.capybara = Capybara.create(inputs)
+    end
   end
 
-  attr_accessor :capybara
+  class UpdateCapybara < Foobara::Command
+    description "Updates a Capybara record"
 
-  def create_capybara
-    self.capybara = Capybara.create(inputs)
-  end
-end
+    inputs Capybara.attributes_for_update
+    result Capybara, description: "The updated Capybara record"
 
-class UpdateCapybara < Foobara::Command
-  description "Updates a Capybara record"
+    def execute
+      load_capybara
+      update_capybara
 
-  inputs Capybara.attributes_for_update
-  result Capybara, description: "The updated Capybara record"
+      capybara
+    end
 
-  def execute
-    load_capybara
-    update_capybara
+    attr_accessor :capybara
 
-    capybara
-  end
+    def load_capybara
+      self.capybara = Capybara.load(id)
+    end
 
-  attr_accessor :capybara
-
-  def load_capybara
-    self.capybara = Capybara.load(id)
+    def update_capybara
+      capybara.update(inputs)
+    end
   end
 
-  def update_capybara
-    capybara.update(inputs)
-  end
-end
+  class FindAllCapybaras < Foobara::Command
+    description "Returns all Capybara records"
 
-class FindAllCapybaras < Foobara::Command
-  description "Returns all Capybara records"
+    result [Capybara], description: "All of the Capybara records there are!"
 
-  result [Capybara], description: "All of the Capybara records there are!"
+    def execute
+      find_all_capybaras
+    end
 
-  def execute
-    find_all_capybaras
-  end
-
-  def find_all_capybaras
-    Capybara.all
-  end
-end
-
-class DeleteAllCapybaras < Foobara::Command
-  description "Deletes all Capybara records"
-
-  depends_on_entity Capybara
-
-  def execute
-    delete_all
-    nil
+    def find_all_capybaras
+      Capybara.all
+    end
   end
 
-  def delete_all
-    FindAllCapybaras.run!.each(&:hard_delete!)
+  class FindCapybara < Foobara::Command
+    description "Takes a Capybara id and returns the corresponding Capybara record"
+
+    inputs do
+      id :integer, :required
+    end
+
+    result Capybara
+
+    def execute
+      find_capybara
+
+      capybara
+    end
+
+    attr_accessor :capybara
+
+    def find_capybara
+      self.capybara = Capybara.load(id)
+    end
+  end
+
+  class DeleteAllCapybaras < Foobara::Command
+    description "Deletes all Capybara records"
+
+    depends_on_entity Capybara
+
+    def execute
+      delete_all
+      nil
+    end
+
+    def delete_all
+      FindAllCapybaras.run!.each(&:hard_delete!)
+    end
   end
 end

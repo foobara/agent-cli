@@ -2,9 +2,10 @@
 
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("./Gemfile", __dir__)
 require "bundler/setup"
+
 require_relative "capybaras"
 
-DeleteAllCapybaras.run!
-CreateCapybara.run!(name: "Fumiko", year_of_birth: 2020)
-CreateCapybara.run!(name: "Barbara", year_of_birth: 19)
-CreateCapybara.run!(name: "Basil", year_of_birth: 2021)
+Capybaras::DeleteAllCapybaras.run!
+Capybaras::CreateCapybara.run!(name: "Fumiko", year_of_birth: 2020)
+Capybaras::CreateCapybara.run!(name: "Barbara", year_of_birth: 19)
+Capybaras::CreateCapybara.run!(name: "Basil", year_of_birth: 2021)
