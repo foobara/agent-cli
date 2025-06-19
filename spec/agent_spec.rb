@@ -215,7 +215,7 @@ RSpec.describe Foobara::Agent do
       context "when using openai" do
         let(:llm_model) { "chatgpt-4o-latest" }
 
-        it "can handle new goals with old context using openai models", vcr: { record: :once } do
+        it "can handle new goals with old context using openai models", vcr: { record: :none } do
           # consume the opening prompt
           response = next_message_to_user
           expect(response).to be_a(String)

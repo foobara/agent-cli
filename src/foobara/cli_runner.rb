@@ -28,8 +28,8 @@ module Foobara
 
           goal = line.strip
 
-          if goal =~ /\A\/?(exit|quit|bye)\z/i
-            print_agent_message("Goodbye for now!")
+          if user_wants_to_quit?(goal)
+            print_agent_message("Goodbye for now!\n")
             agent.kill!
             break
           end
@@ -81,6 +81,20 @@ module Foobara
       def print_agent_message(message, stream = io_out)
         name = agent_name || "Agent"
         Util.pipe_writeline(stream, "\n#{name} says: #{message}\n")
+      end
+
+      def user_wants_to_quit?(goal)
+        if goal =~ /\/?(exit|quit|(good)?.?bye)/i
+          remainder = "#{::Regexp.last_match.pre_match}#{::Regexp.last_match.post_match}."
+          remainder.strip!
+
+          remainder.gsub!(/thanks?.?(you)?[\.!]*/i, "")
+          remainder.gsub!(/\A\s*\w+[\.!]*/i, "")
+          remainder.gsub!(/[\.!]*\z/i, "")
+
+          remainder.strip!
+          remainder.empty?
+        end
       end
 
       def agent_name
