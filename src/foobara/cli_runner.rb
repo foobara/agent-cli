@@ -88,9 +88,9 @@ module Foobara
           remainder = "#{::Regexp.last_match.pre_match}#{::Regexp.last_match.post_match}."
           remainder.strip!
 
-          remainder.gsub!(/thanks?.?(you)?[\.!]*/i, "")
-          remainder.gsub!(/\A\s*\w+[\.!]*/i, "")
-          remainder.gsub!(/[\.!]*\z/i, "")
+          remainder.gsub!(/thanks?.?(you)?[.!]*/i, "")
+          remainder.gsub!(/\A\s*\w+[.!]*/i, "")
+          remainder.gsub!(/[.!]*\z/i, "")
 
           remainder.strip!
           remainder.empty?

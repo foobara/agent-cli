@@ -31,7 +31,9 @@ module Foobara
     def pipe_io_operation(_io)
       yield
     rescue EOFError
+      # :nocov:
       nil
+      # :nocov:
     rescue IOError => e
       # :nocov:
       message = e.message

@@ -1,3 +1,7 @@
+## [0.1.0] - 2025-08-22
+
+- Support foobara-agent 0.1.0
+
 ## [0.0.4] - 2025-06-19
 
 - Support cuter ways to exit

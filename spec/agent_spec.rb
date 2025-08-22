@@ -6,7 +6,7 @@ RSpec.describe Foobara::Agent do
   end
 
   let(:agent) do
-    params = { command_classes:, llm_model: }
+    params = { command_classes:, llm_model:, verbose: }
 
     if agent_name
       params[:agent_name] = agent_name
@@ -19,6 +19,7 @@ RSpec.describe Foobara::Agent do
   let(:errors_hash) { outcome.errors_hash }
   let(:agent_name) { "CapybaraAgent" }
   let(:llm_model) { "claude-3-7-sonnet-20250219" }
+  let(:verbose) { nil }
 
   context "when there are some capybaras but one has a bad year of birth" do
     use_capybaras_domain
@@ -55,6 +56,7 @@ RSpec.describe Foobara::Agent do
           Foobara::Util.close(io_in_writer)
           Foobara::Util.close(io_out_writer)
           Foobara::Util.close(io_err_writer)
+          raise
         end
       end
       let(:monitor_agent_thread) do
@@ -156,64 +158,27 @@ RSpec.describe Foobara::Agent do
         response = next_message_to_user
         expect(response).to be_a(String)
 
+        io_in_writer.puts "/quit"
+
         Capybaras::Capybara.transaction do
           expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
         end
       end
 
-      context "with no name" do
+      context "when no name" do
         let(:agent_name) { nil }
 
-        it "can handle new goals with old context", vcr: { record: :none } do
+        it "can still print out the prompt", vcr: { record: :none } do
           # consume the welcome message
           response = next_message_to_user
-          expect(response).to be_a(String)
-
-          Capybaras::Capybara.transaction do
-            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
-          end
-
-          io_in_writer.puts goal
-
-          # eat up progress message
-          response = next_message_to_user
-          expect(response).to be_a(String)
-          # the message to the user
-          response = next_message_to_user
-          expect(response).to be_a(String)
-
-          Capybaras::Capybara.transaction do
-            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(2019)
-          end
-
-          io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
-
-          # eat up progress message
-          response = next_message_to_user
-          expect(response).to be_a(String)
-          # the message to the user
-          response = next_message_to_user
-          expect(response).to be_a(String)
-
-          Capybaras::Capybara.transaction do
-            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
-          end
-
-          io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
-
-          # eat up progress message
-          response = next_message_to_user
-          expect(response).to be_a(String)
-          # the message to the user
-          response = next_message_to_user
-          expect(response).to be_a(String)
-
           io_in_writer.puts "/quit"
+
+          expect(response).to be_a(String)
         end
       end
 
       context "when using openai" do
-        let(:llm_model) { "chatgpt-4o-latest" }
+        let(:llm_model) { "o1" }
 
         it "can handle new goals with old context using openai models", vcr: { record: :none } do
           # consume the opening prompt
@@ -274,6 +239,7 @@ RSpec.describe Foobara::Agent do
           # eat up progress message
           response = next_message_to_user
           expect(response).to be_a(String)
+
           # the message to the user
           response = next_message_to_user
           expect(response).to be_a(String)
@@ -282,24 +248,18 @@ RSpec.describe Foobara::Agent do
             expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(2019)
           end
 
-          # deepseek-r1 does not seem to do a consistently good job of setting it back to 19 so commenting this
-          # out for now.
-          #
-          # Foobara::Util.pipe_writeline(
-          #   io_in_writer,
-          #   "Can you change Barbara's year_of_birth back to 19 so I can do the demo over again?"
-          # )
-          #
-          # # eat up progress message
-          # response = next_message_to_user
-          # expect(response).to be_a(String)
-          # # the message to the user
-          # response = next_message_to_user
-          # expect(response).to be_a(String)
-          #
-          # Capybaras::Capybara.transaction do
-          #   expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
-          # end
+          io_in_writer.puts "Thank you so much! Can you set it back so that I can do the demo over again? Thanks!"
+
+          # eat up progress message
+          response = next_message_to_user
+          expect(response).to be_a(String)
+          # the message to the user
+          response = next_message_to_user
+          expect(response).to be_a(String)
+
+          Capybaras::Capybara.transaction do
+            expect(Capybaras::Capybara.find_by(name: "Barbara").year_of_birth).to eq(19)
+          end
         end
       end
     end

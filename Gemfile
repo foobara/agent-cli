@@ -10,12 +10,11 @@ gemspec
 # gem "foobara-util", path: "../util"
 # gem "foobara-llm-backed-command", path: "../llm-backed-command"
 
-gem "foobara-dotenv-loader", "~> 0.0.1"
+gem "foobara-dotenv-loader", "< 2.0.0"
 
 gem "rake"
 
 group :development do
-  gem "foob"
   gem "foobara-rubocop-rules", ">= 1.0.0"
   gem "guard-rspec"
   gem "rubocop-rake"
@@ -23,9 +22,9 @@ group :development do
 end
 
 group :development, :test do
-  gem "foobara-anthropic-api"
-  gem "foobara-ollama-api"
-  gem "foobara-open-ai-api"
+  gem "foobara-anthropic-api", "< 2.0.0"
+  gem "foobara-ollama-api", "< 2.0.0"
+  gem "foobara-open-ai-api", "< 2.0.0"
 
   gem "pry"
   gem "pry-byebug"
@@ -35,7 +34,7 @@ group :development, :test do
 end
 
 group :test do
-  gem "foobara-spec-helpers", "~> 0.0.1"
+  gem "foobara-spec-helpers", "< 2.0.0"
   gem "rspec"
   gem "rspec-its"
   gem "ruby-prof"
