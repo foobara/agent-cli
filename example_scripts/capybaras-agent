@@ -16,6 +16,7 @@ require "foobara/agent_cli"
 
 llm_model = "claude-3-7-sonnet-20250219"
 # llm_model = "chatgpt-4o-latest"
+# llm_model = "qwen3-coder:30b"
 
 agent = Foobara::Agent.new(agent_name: "CapyAgent", llm_model:)
 
