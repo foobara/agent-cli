@@ -31,11 +31,11 @@ module Foobara
     def pipe_io_operation(_io)
       yield
     rescue EOFError
-      # :nocov:
+      # simplecov:disable
       nil
-      # :nocov:
+      # simplecov:enable
     rescue IOError => e
-      # :nocov:
+      # simplecov:disable
       message = e.message
 
       if message.include?("closed") && message.include?("stream")
@@ -43,16 +43,16 @@ module Foobara
       else
         raise
       end
-      # :nocov:
+      # simplecov:enable
     end
 
     def close(io)
       io.close
       nil
     rescue IOError
-      # :nocov:
+      # simplecov:disable
       nil
-      # :nocov:
+      # simplecov:enable
     end
   end
 end

@@ -22,7 +22,9 @@ group :development do
 end
 
 group :development, :test do
-  gem "foobara-anthropic-api", "< 2.0.0"
+  # one test fails on the newly released foobara-anthropic-api 1.0.6
+  # related to `temperature` no longer being an allowed attribute
+  gem "foobara-anthropic-api", "1.0.5"
   gem "foobara-ollama-api", "< 2.0.0"
   gem "foobara-open-ai-api", "< 2.0.0"
 
