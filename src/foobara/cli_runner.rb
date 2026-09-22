@@ -42,10 +42,10 @@ module Foobara
             print_outcome(outcome)
             print_prompt
           rescue => e
-            # :nocov:
+            # simplecov:disable
             Util.pipe_writeline(io_err, e.message)
             Util.pipe_writeline(io_err, e.backtrace)
-            # :nocov:
+            # simplecov:enable
           end
         end
       end
@@ -70,9 +70,9 @@ module Foobara
         message, stream = if outcome.success?
                             [outcome.result[:message_to_user], io_out]
                           else
-                            # :nocov:
+                            # simplecov:disable
                             ["ERROR: #{outcome.errors_hash}", io_err]
-                            # :nocov:
+                            # simplecov:enable
                           end
 
         print_agent_message(message, stream)

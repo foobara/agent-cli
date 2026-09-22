@@ -18,7 +18,7 @@ RSpec.describe Foobara::Agent do
   let(:errors) { outcome.errors }
   let(:errors_hash) { outcome.errors_hash }
   let(:agent_name) { "CapybaraAgent" }
-  let(:llm_model) { "claude-3-7-sonnet-20250219" }
+  let(:llm_model) { "claude-sonnet-5" }
   let(:verbose) { nil }
 
   context "when there are some capybaras but one has a bad year of birth" do
